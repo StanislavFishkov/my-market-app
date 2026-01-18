@@ -1,5 +1,6 @@
 package ru.yandex.practicum.mymarket.controller;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,7 +31,7 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping("/{id}")
-    public String getItemById(@PathVariable("id") Long itemId, Model model) {
+    public String getItemById(@PathVariable("id") @NotNull Long itemId, Model model) {
         log.info("GET /item with params(id={}))", itemId);
 
         ItemDto itemDto = itemService.getItemById(itemId);

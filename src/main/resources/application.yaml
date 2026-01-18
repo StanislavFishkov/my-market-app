@@ -8,3 +8,32 @@ spring:
     driverClassName: org.h2.Driver
     username: admin
     password: admin
+  sql:
+    init:
+      mode: always
+  output:
+    ansi:
+      enabled: ALWAYS
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        web:
+          client:
+            RestTemplate: INFO
+        orm:
+          jpa: INFO
+      hibernate:
+        orm:
+          jdbc:
+            bind: trace
