@@ -1,4 +1,4 @@
-package ru.yandex.practicum.mymarket.model;
+package ru.yandex.practicum.mymarket.model.item;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

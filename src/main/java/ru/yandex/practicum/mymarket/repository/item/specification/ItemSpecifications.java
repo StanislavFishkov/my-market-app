@@ -1,7 +1,7 @@
 package ru.yandex.practicum.mymarket.repository.item.specification;
 
 import org.springframework.data.jpa.domain.Specification;
-import ru.yandex.practicum.mymarket.model.Item;
+import ru.yandex.practicum.mymarket.model.item.Item;
 
 public final class ItemSpecifications {
     private ItemSpecifications() {

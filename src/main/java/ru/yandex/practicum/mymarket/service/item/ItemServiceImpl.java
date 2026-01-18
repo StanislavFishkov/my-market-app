@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.mymarket.dto.item.ItemDto;
 import ru.yandex.practicum.mymarket.dto.item.ItemSearchRequestDto;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
-import ru.yandex.practicum.mymarket.mapper.ItemMapper;
-import ru.yandex.practicum.mymarket.model.Item;
+import ru.yandex.practicum.mymarket.mapper.item.ItemMapper;
+import ru.yandex.practicum.mymarket.model.item.Item;
 import ru.yandex.practicum.mymarket.repository.item.ItemRepository;
 import ru.yandex.practicum.mymarket.repository.item.specification.ItemSpecifications;
 
