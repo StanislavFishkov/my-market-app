@@ -4,7 +4,8 @@ import java.util.Arrays;
 
 public enum CartItemAction {
     PLUS,
-    MINUS;
+    MINUS,
+    DELETE;
 
     public static CartItemAction from(String value) {
         if (value == null || value.isBlank()) {

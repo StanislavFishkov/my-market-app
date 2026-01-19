@@ -14,7 +14,7 @@ public final class PartitionUtils {
         int size = list.size();
         for (int i = 0; i < size; i += chunkSize) {
             int end = Math.min(size, i + chunkSize);
-            chunks.add(list.subList(i, end));
+            chunks.add(new ArrayList<>(list.subList(i, end)));
         }
         return chunks;
     }

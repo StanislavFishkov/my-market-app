@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriComponentsBuilder;
 import ru.yandex.practicum.mymarket.dto.PagingDto;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.dto.item.ItemDto;
@@ -60,10 +61,15 @@ public class ItemController {
                               @ModelAttribute ItemSearchRequestDto itemSearchRequestDto) {
         log.info("POST /items with params(id={}, action={}): {}", itemId, cartItemAction, itemSearchRequestDto);
 
-        // TODO: реализовать действие по изменению
+        itemService.changeItemCount(itemId, cartItemAction);
 
-        return "redirect:/items?search=[%s]&sort=[%s]&pageNumber=[%s]&pageSize=[%s]"
-                .formatted(itemSearchRequestDto.search(), itemSearchRequestDto.sort().toString(),
-                        itemSearchRequestDto.pageNumber(), itemSearchRequestDto.pageSize());
+        return "redirect:" + UriComponentsBuilder
+                .fromPath("/items")
+                .queryParam("search", itemSearchRequestDto.search())
+                .queryParam("sort", itemSearchRequestDto.sort())
+                .queryParam("pageNumber", itemSearchRequestDto.pageNumber())
+                .queryParam("pageSize", itemSearchRequestDto.pageSize())
+                .build()
+                .toUriString();
     }
 }

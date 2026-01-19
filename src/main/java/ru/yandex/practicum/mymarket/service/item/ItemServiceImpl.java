@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.dto.item.ItemDto;
 import ru.yandex.practicum.mymarket.dto.item.ItemSearchRequestDto;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
@@ -13,6 +14,8 @@ import ru.yandex.practicum.mymarket.mapper.item.ItemMapper;
 import ru.yandex.practicum.mymarket.model.item.Item;
 import ru.yandex.practicum.mymarket.repository.item.ItemRepository;
 import ru.yandex.practicum.mymarket.repository.item.specification.ItemSpecifications;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -39,6 +42,33 @@ public class ItemServiceImpl implements ItemService {
         Page<Item> page = itemRepository.findAll(spec, itemSearchRequestDto.toPageable());
 
         return page.map(itemMapper::toDto);
+    }
+
+    @Override
+    public List<ItemDto> findCartItems() {
+        List<Item> cartItems = itemRepository.findAllByCountGreaterThan(0);
+
+        return itemMapper.toDto(cartItems);
+    }
+
+    @Override
+    @Transactional
+    public void changeItemCount(Long itemId, CartItemAction cartItemAction) {
+        Item item = getItemOrThrow(itemId);
+
+        int count = item.getCount();
+
+        switch (cartItemAction) {
+            case PLUS -> item.setCount(count + 1);
+            case MINUS -> {
+                if (count > 0) item.setCount(count - 1);
+                        else item.setCount(0);
+            }
+            case DELETE -> item.setCount(0);
+            default -> throw new IllegalStateException("Unexpected value: " + cartItemAction);
+        }
+
+        itemRepository.save(item);
     }
 
     private Item getItemOrThrow(Long itemId) {
