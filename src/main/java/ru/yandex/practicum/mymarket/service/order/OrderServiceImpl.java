@@ -6,8 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.mymarket.dto.order.OrderDto;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
+import ru.yandex.practicum.mymarket.mapper.item.ItemMapper;
 import ru.yandex.practicum.mymarket.mapper.order.OrderMapper;
+import ru.yandex.practicum.mymarket.model.item.Item;
 import ru.yandex.practicum.mymarket.model.order.Order;
+import ru.yandex.practicum.mymarket.repository.item.ItemRepository;
 import ru.yandex.practicum.mymarket.repository.order.OrderRepository;
 
 import java.util.List;
@@ -18,12 +21,20 @@ import java.util.List;
 @Transactional(readOnly=true)
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
+    private  final ItemRepository itemRepository;
     private final OrderMapper orderMapper;
+    private final ItemMapper itemMapper;
 
     @Override
     @Transactional
     public Long createOrder() {
-        Order order = orderRepository.save(new Order());
+        List<Item> cartItems = itemRepository.findAllByCountGreaterThan(0);
+
+        Order order = orderRepository.save(Order.builder().items(itemMapper.toOrderItem(cartItems)).build());
+
+        cartItems.forEach(cartItem -> cartItem.setCount(0));
+        itemRepository.saveAll(cartItems);
+
         log.debug("Order created: id={}", order.getId());
         return order.getId();
     }

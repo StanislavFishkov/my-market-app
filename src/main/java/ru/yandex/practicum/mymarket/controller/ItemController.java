@@ -72,4 +72,17 @@ public class ItemController {
                 .build()
                 .toUriString();
     }
+
+    @PostMapping("/{id}")
+    public String changeItems(@PathVariable("id") Long itemId, @RequestParam("action") CartItemAction cartItemAction) {
+        log.info("POST /items/{} with params(action={})", itemId, cartItemAction);
+
+        itemService.changeItemCount(itemId, cartItemAction);
+
+        return "redirect:" + UriComponentsBuilder
+                .fromPath("/items")
+                .pathSegment(itemId.toString())
+                .build()
+                .toUriString();
+    }
 }
