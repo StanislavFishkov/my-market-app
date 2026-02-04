@@ -1,11 +1,9 @@
 package ru.yandex.practicum.mymarket.repository.item;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 import ru.yandex.practicum.mymarket.model.item.Item;
 
-import java.util.List;
-
-public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificationExecutor<Item> {
-    List<Item> findAllByCountGreaterThan(int count);
+public interface ItemRepository extends ReactiveCrudRepository<Item, Long> {
+    Flux<Item> findAllByCountGreaterThan(int count);
 }
