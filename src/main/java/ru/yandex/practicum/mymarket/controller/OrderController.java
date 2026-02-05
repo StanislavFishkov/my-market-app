@@ -10,10 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.yandex.practicum.mymarket.dto.order.OrderDto;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.service.order.OrderService;
-
-import java.util.List;
 
 @Slf4j
 @Validated
@@ -23,34 +21,32 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/orders/{id}")
-    public String getOrderById(@PathVariable("id") @NotNull Long orderId,
-                               @RequestParam(required = false) Boolean newOrder,
-                               Model model) {
+    public Mono<String> getOrderById(@PathVariable("id") @NotNull Long orderId,
+                                     @RequestParam(required = false) Boolean newOrder,
+                                     Model model) {
         log.info("GET /orders/{} with params(newOrder={}))", orderId,  newOrder);
 
-        OrderDto orderDto = orderService.getOrderById(orderId);
-
-        model.addAttribute("order", orderDto);
-        model.addAttribute("newOrder", newOrder);
-
-        return "order";
+        return orderService.getOrderById(orderId)
+                .doOnNext(orderDto -> {
+                    model.addAttribute("order", orderDto);
+                    model.addAttribute("newOrder", newOrder);
+                })
+                .thenReturn("order");
     }
 
     @GetMapping("/orders")
-    public String findOrders(Model model) {
+    public Mono<String> findOrders(Model model) {
         log.info("GET /orders ");
 
-        List<OrderDto> orders = orderService.findOrders();
-
-        model.addAttribute("orders", orders);
-
-        return "orders";
+        return orderService.findOrders()
+                .collectList()
+                .doOnNext(orders -> model.addAttribute("orders", orders))
+                .thenReturn("orders");
     }
 
     @PostMapping("/buy")
-    public String buy() {
-        Long orderId = orderService.createOrder();
-
-        return "redirect:/orders/%s?newOrder=true".formatted(orderId);
+    public Mono<String> buy() {
+        return orderService.createOrder()
+                .map("redirect:/orders/%s?newOrder=true"::formatted);
     }
 }

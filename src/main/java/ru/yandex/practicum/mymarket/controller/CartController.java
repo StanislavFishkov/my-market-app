@@ -6,12 +6,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
+import ru.yandex.practicum.mymarket.dto.cart.CartItemActionDto;
+import ru.yandex.practicum.mymarket.dto.cart.IdRequired;
 import ru.yandex.practicum.mymarket.service.item.ItemService;
 
 @Slf4j
@@ -37,10 +38,10 @@ public class CartController {
     }
 
     @PostMapping("/items")
-    public Mono<String> changeItems(@RequestParam("id") Long itemId, @RequestParam("action") CartItemAction cartItemAction) {
-        log.info("POST /cart/items with params(id={}, action={})", itemId, cartItemAction);
+    public Mono<String> changeItems(@Validated(IdRequired.class) @ModelAttribute CartItemActionDto cartItemActionDto) {
+        log.info("POST /cart/items with params(id={}, action={})", cartItemActionDto.id(), cartItemActionDto.action());
 
-        return itemService.changeItemCount(itemId, cartItemAction)
+        return itemService.changeItemCount(cartItemActionDto.id(), cartItemActionDto.action())
                 .thenReturn("redirect:" + UriComponentsBuilder
                         .fromPath("/cart/items")
                         .build()

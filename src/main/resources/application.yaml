@@ -3,13 +3,15 @@ server.port: 8080
 spring:
   application:
     name: my-market-app
-  datasource:
-    url: jdbc:h2:file:${project.dir:.}/db/data;MODE=PostgreSQL;DEFAULT_NULL_ORDERING=HIGH
-    driverClassName: org.h2.Driver
+  r2dbc:
+    url: r2dbc:h2:file:///${project.dir:.}/db/data;MODE=PostgreSQL;DEFAULT_NULL_ORDERING=HIGH
     username: admin
     password: admin
   liquibase:
     enabled: true
+    url: jdbc:h2:file:${project.dir:.}/db/data;MODE=PostgreSQL;DEFAULT_NULL_ORDERING=HIGH
+    user: admin
+    password: admin
     change-log: classpath:/db/changelog/db.changelog-master.yaml
     contexts: testdata-init
   sql:
@@ -18,26 +20,19 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        highlight_sql: true
 
 logging:
   level:
-    root: INFO
+    root: info
     org:
       springframework:
         web:
-          client:
-            RestTemplate: INFO
-        orm:
-          jpa: INFO
-      hibernate:
-        orm:
-          jdbc:
-            bind: trace
+          reactive:
+            function:
+              client: info
+        data:
+          r2dbc: debug
+    io:
+      r2dbc:
+        spi: debug
+        h2: debug

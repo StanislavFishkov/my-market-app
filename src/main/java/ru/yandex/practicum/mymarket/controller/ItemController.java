@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.PagingDto;
-import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
+import ru.yandex.practicum.mymarket.dto.cart.CartItemActionDto;
+import ru.yandex.practicum.mymarket.dto.cart.IdRequired;
 import ru.yandex.practicum.mymarket.dto.item.ItemDto;
 import ru.yandex.practicum.mymarket.dto.item.ItemSearchRequestDto;
 import ru.yandex.practicum.mymarket.service.item.ItemService;
@@ -55,11 +55,12 @@ public class ItemController {
     }
 
     @PostMapping
-    public Mono<String> changeItems(@RequestParam("id") Long itemId, @RequestParam("action") CartItemAction cartItemAction,
+    public Mono<String> changeItems(@Validated(IdRequired.class) @ModelAttribute CartItemActionDto cartItemActionDto,
                                     @ModelAttribute ItemSearchRequestDto itemSearchRequestDto) {
-        log.info("POST /items with params(id={}, action={}): {}", itemId, cartItemAction, itemSearchRequestDto);
+        log.info("POST /items with params(id={}, action={}): {}", cartItemActionDto.id(), cartItemActionDto.action(),
+                itemSearchRequestDto);
 
-        return itemService.changeItemCount(itemId, cartItemAction)
+        return itemService.changeItemCount(cartItemActionDto.id(), cartItemActionDto.action())
                 .thenReturn("redirect:" + UriComponentsBuilder
                         .fromPath("/items")
                         .queryParam("search", itemSearchRequestDto.search())
@@ -73,10 +74,11 @@ public class ItemController {
     }
 
     @PostMapping("/{id}")
-    public Mono<String> changeItems(@PathVariable("id") Long itemId, @RequestParam("action") CartItemAction cartItemAction) {
-        log.info("POST /items/{} with params(action={})", itemId, cartItemAction);
+    public Mono<String> changeItems(@PathVariable("id") Long itemId,
+                                    @Validated @ModelAttribute CartItemActionDto cartItemActionDto) {
+        log.info("POST /items/{} with params(action={})", itemId, cartItemActionDto.action());
 
-        return itemService.changeItemCount(itemId, cartItemAction)
+        return itemService.changeItemCount(itemId, cartItemActionDto.action())
                 .thenReturn("redirect:" + UriComponentsBuilder
                         .fromPath("/items")
                         .pathSegment(itemId.toString())
