@@ -5,12 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.yandex.practicum.mymarket.config.PostgresSQLTestContainer;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.model.item.Item;
@@ -21,16 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureWebTestClient
 class CartControllerTest extends PostgresSQLTestContainer {
 
     @Autowired
-    private MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @MockitoSpyBean
     private ItemService itemService;
@@ -40,7 +35,6 @@ class CartControllerTest extends PostgresSQLTestContainer {
 
     @Test
     @SneakyThrows
-    @Transactional
     void shouldIncreaseCountInCart_whenActionPlusInvoked() {
         // Given
         Item item = Item.builder()
@@ -49,21 +43,31 @@ class CartControllerTest extends PostgresSQLTestContainer {
                 .price(100L)
                 .count(0)
                 .build();
+        String expectedRedirectUrl = "/cart/items";
 
-        item = itemRepository.save(item);
+        item = itemRepository.save(item).block();
         Mockito.reset(itemRepository);
 
+        assertThat(item).isNotNull();
+        Long itemId = item.getId();
+
         // When + Then
-        MvcResult result = mockMvc.perform(post("/cart/items")
-                        .param("id", item.getId().toString())
-                        .param("action", "PLUS"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart/items"))
-                .andReturn();
+        webTestClient.post()
+                .uri(uriBuilder ->  uriBuilder
+                        .path("/cart/items")
+                        .queryParam("id", itemId.toString())
+                        .queryParam("action", "PLUS")
+                        .build())
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueMatches("Location", expectedRedirectUrl);
 
         // check item count
-        Item updatedItem = itemRepository.findById(item.getId()).orElseThrow();
-        assertThat(updatedItem.getCount()).isEqualTo(1);
+        Item updatedItem = itemRepository.findById(item.getId()).block();
+        assertThat(updatedItem)
+                .isNotNull()
+                .extracting(Item::getCount)
+                .isEqualTo(1);
 
         // verify calls
         verify(itemService, only()).changeItemCount(item.getId(), CartItemAction.PLUS);
@@ -76,11 +80,10 @@ class CartControllerTest extends PostgresSQLTestContainer {
         assertThat(savedItem.getTitle()).isEqualTo("title");
 
         // check redirect url
-        String redirectedUrl = result.getResponse().getRedirectedUrl();
-        assertThat(redirectedUrl).isNotNull();
-
-        mockMvc.perform(get(redirectedUrl))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"));
+        webTestClient.get()
+                .uri(expectedRedirectUrl)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType("text/html");
     }
 }
