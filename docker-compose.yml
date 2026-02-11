@@ -1,6 +1,6 @@
 services:
   my-market-app:
-    build: .
+    build: my-market-app-module
     container_name: my-market-app
     ports:
       - "8080:8080"
@@ -11,6 +11,23 @@ services:
       timeout: 5s
       interval: 20s
       retries: 5
+
+#  mma-db:
+#    image: postgres:16.1
+#    container_name: postgres-mma-db
+#    ports:
+#      - "5432:5432"
+#    networks:
+#      - mma-net
+#    environment:
+#      POSTGRES_DB: mma_db
+#      POSTGRES_PASSWORD: root
+#      POSTGRES_USER: root
+#    healthcheck:
+#      test: pg_isready -q -d mma_db -U $$POSTGRES_USER
+#      timeout: 5s
+#      interval: 10s
+#      retries: 15
 
 networks:
   mma-net:
