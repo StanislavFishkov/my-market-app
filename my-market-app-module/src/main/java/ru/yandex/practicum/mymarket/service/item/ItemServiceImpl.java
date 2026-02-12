@@ -2,6 +2,7 @@ package ru.yandex.practicum.mymarket.service.item;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
@@ -30,6 +31,7 @@ public class ItemServiceImpl implements ItemService {
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
     @Override
+    @Cacheable(value = "item", key = "#itemId")
     public Mono<ItemDto> getItemById(Long itemId) {
         log.debug("Item requested: id={}", itemId);
 

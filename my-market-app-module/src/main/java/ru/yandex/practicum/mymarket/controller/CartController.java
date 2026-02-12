@@ -32,7 +32,7 @@ public class CartController {
                 .doOnNext(cartItems -> {
                     model.addAttribute("items", cartItems);
                     model.addAttribute("total", cartItems.stream()
-                            .mapToLong(item -> item.price() * item.count()).sum());
+                            .mapToLong(item -> item.getPrice() * item.getCount()).sum());
                 })
                 .thenReturn("cart");
     }

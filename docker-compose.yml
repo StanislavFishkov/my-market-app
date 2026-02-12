@@ -4,6 +4,9 @@ services:
     container_name: my-market-app
     ports:
       - "8080:8080"
+    depends_on:
+      mma-cache:
+        condition: service_healthy
     networks:
       - mma-net
     healthcheck:
@@ -11,6 +14,21 @@ services:
       timeout: 5s
       interval: 20s
       retries: 5
+
+  mma-cache:
+    image: redis:7.4.2-bookworm
+    container_name: redis-mma-cache
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - mma-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      timeout: 5s
+      interval: 20s
+      retries: 5
+      start_period: 5s
 
 #  mma-db:
 #    image: postgres:16.1

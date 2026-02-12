@@ -33,6 +33,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+		</dependency>
 
 		<!-- DATABASE -->
 		<dependency>
@@ -104,6 +108,14 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>r2dbc</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- REDIS EMBEDDED-->
+		<dependency>
+			<groupId>com.github.codemonstur</groupId>
+			<artifactId>embedded-redis</artifactId>
+			<version>1.4.3</version>
 			<scope>test</scope>
 		</dependency>
 

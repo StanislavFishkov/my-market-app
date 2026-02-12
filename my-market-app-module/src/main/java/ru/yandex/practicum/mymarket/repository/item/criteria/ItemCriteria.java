@@ -10,7 +10,7 @@ public final class ItemCriteria {
     public static Criteria searchInTitleOrDescription(String search) {
         if (search == null) return Criteria.empty();
 
-        String pattern = "%" + search.toLowerCase() + "%";
+        String pattern = "%" + search + "%";
         return Criteria.where("title").like(pattern).ignoreCase(true)
                 .or(Criteria.where("description").like(pattern).ignoreCase(true));
     }
