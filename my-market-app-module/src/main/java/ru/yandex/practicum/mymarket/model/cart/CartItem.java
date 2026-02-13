@@ -1,8 +1,6 @@
-package ru.yandex.practicum.mymarket.model.item;
+package ru.yandex.practicum.mymarket.model.cart;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,30 +10,21 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table(name = "items")
+@Table(name = "cart_items")
 @Getter
 @Setter
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class Item {
+public class CartItem {
     @Id
     Long id;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column
-    String title;
-
-    @Size(max = 1000)
-    @Column
-    String description;
-
-    @Size(max = 255)
-    @Column
-    String imgPath;
+    @Column("item_id")
+    Long itemId;
 
     @Min(0)
     @Column
-    Long price;
+    @Builder.Default
+    Integer count = 0;
 }

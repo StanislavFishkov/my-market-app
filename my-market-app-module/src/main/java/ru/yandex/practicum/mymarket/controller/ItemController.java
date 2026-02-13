@@ -16,8 +16,9 @@ import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.PagingDto;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemActionDto;
 import ru.yandex.practicum.mymarket.dto.cart.IdRequired;
-import ru.yandex.practicum.mymarket.dto.item.ItemDto;
+import ru.yandex.practicum.mymarket.dto.item.ItemWithCountDto;
 import ru.yandex.practicum.mymarket.dto.item.ItemSearchRequestDto;
+import ru.yandex.practicum.mymarket.service.cart.CartService;
 import ru.yandex.practicum.mymarket.service.item.ItemService;
 import ru.yandex.practicum.mymarket.utils.PartitionUtils;
 
@@ -27,9 +28,10 @@ import ru.yandex.practicum.mymarket.utils.PartitionUtils;
 @RequiredArgsConstructor
 @RequestMapping("/items")
 public class ItemController {
-    private static final ItemDto emptyItemDto = ItemDto.builder().id(-1L).build();
+    private static final ItemWithCountDto emptyItemDto = ItemWithCountDto.builder().id(-1L).build();
 
     private final ItemService itemService;
+    private final CartService cartService;
 
     @GetMapping("/{id}")
     public Mono<String> getItemById(@PathVariable("id") @NotNull Long itemId, Model model) {
@@ -60,7 +62,7 @@ public class ItemController {
         log.info("POST /items with params(id={}, action={}): {}", cartItemActionDto.id(), cartItemActionDto.action(),
                 itemSearchRequestDto);
 
-        return itemService.changeItemCount(cartItemActionDto.id(), cartItemActionDto.action())
+        return cartService.changeItemCount(cartItemActionDto.id(), cartItemActionDto.action())
                 .thenReturn("redirect:" + UriComponentsBuilder
                         .fromPath("/items")
                         .queryParam("search", itemSearchRequestDto.search())
@@ -78,7 +80,7 @@ public class ItemController {
                                     @Validated @ModelAttribute CartItemActionDto cartItemActionDto) {
         log.info("POST /items/{} with params(action={})", itemId, cartItemActionDto.action());
 
-        return itemService.changeItemCount(itemId, cartItemActionDto.action())
+        return cartService.changeItemCount(itemId, cartItemActionDto.action())
                 .thenReturn("redirect:" + UriComponentsBuilder
                         .fromPath("/items")
                         .pathSegment(itemId.toString())

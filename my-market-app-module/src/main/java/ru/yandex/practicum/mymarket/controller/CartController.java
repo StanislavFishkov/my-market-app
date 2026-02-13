@@ -13,7 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemActionDto;
 import ru.yandex.practicum.mymarket.dto.cart.IdRequired;
-import ru.yandex.practicum.mymarket.service.item.ItemService;
+import ru.yandex.practicum.mymarket.service.cart.CartService;
 
 @Slf4j
 @Validated
@@ -21,13 +21,13 @@ import ru.yandex.practicum.mymarket.service.item.ItemService;
 @RequiredArgsConstructor
 @RequestMapping("/cart")
 public class CartController {
-    private final ItemService itemService;
+    private final CartService cartService;
 
     @GetMapping("/items")
     public Mono<String> getCartItems(Model model) {
         log.info("GET /cart/items");
 
-        return itemService.findCartItems()
+        return cartService.findCartItems()
                 .collectList()
                 .doOnNext(cartItems -> {
                     model.addAttribute("items", cartItems);
@@ -41,7 +41,7 @@ public class CartController {
     public Mono<String> changeItems(@Validated(IdRequired.class) @ModelAttribute CartItemActionDto cartItemActionDto) {
         log.info("POST /cart/items with params(id={}, action={})", cartItemActionDto.id(), cartItemActionDto.action());
 
-        return itemService.changeItemCount(cartItemActionDto.id(), cartItemActionDto.action())
+        return cartService.changeItemCount(cartItemActionDto.id(), cartItemActionDto.action())
                 .thenReturn("redirect:" + UriComponentsBuilder
                         .fromPath("/cart/items")
                         .build()

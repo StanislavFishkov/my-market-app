@@ -11,9 +11,9 @@ import ru.yandex.practicum.mymarket.exception.NotFoundException;
 import ru.yandex.practicum.mymarket.mapper.item.ItemMapper;
 import ru.yandex.practicum.mymarket.mapper.order.OrderMapper;
 import ru.yandex.practicum.mymarket.model.order.Order;
-import ru.yandex.practicum.mymarket.repository.item.ItemRepository;
 import ru.yandex.practicum.mymarket.repository.order.OrderItemRepository;
 import ru.yandex.practicum.mymarket.repository.order.OrderRepository;
+import ru.yandex.practicum.mymarket.service.cart.CartService;
 
 @Slf4j
 @Service
@@ -22,14 +22,16 @@ import ru.yandex.practicum.mymarket.repository.order.OrderRepository;
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ItemRepository itemRepository;
+
+    private final CartService cartService;
+
     private final OrderMapper orderMapper;
     private final ItemMapper itemMapper;
 
     @Override
     @Transactional
     public Mono<Long> createOrder() {
-        return itemRepository.findAllByCountGreaterThan(0)
+        return cartService.findCartItems()
                 .collectList()
                 .flatMap(cartItems -> {
                     if (cartItems.isEmpty()) {
@@ -42,12 +44,9 @@ public class OrderServiceImpl implements OrderService {
                                 return orderItemRepository.saveAll(order.getItems())
                                         .then(Mono.just(order.getId()));
                             })
-                            .flatMap(orderId -> {
-                                cartItems.forEach(cartItem -> cartItem.setCount(0));
-                                return itemRepository.saveAll(cartItems)
-                                        .then(Mono.just(orderId));
-
-                            })
+                            .flatMap(orderId -> cartService.deleteAllCartItems()
+                                        .then(Mono.just(orderId))
+                            )
                             .doOnNext(orderId -> log.debug("Order created: id={}", orderId));
                 });
     }

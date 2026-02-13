@@ -9,10 +9,11 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemDto {
+public class ItemWithCountDto {
     Long id;
     String title;
     String description;
     String imgPath;
     Long price;
+    Integer count;
 }

@@ -8,6 +8,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import ru.yandex.practicum.mymarket.dto.item.ItemDto;
+import ru.yandex.practicum.mymarket.dto.item.ItemPageDto;
 
 import java.time.Duration;
 
@@ -22,6 +23,13 @@ public class CacheConfig {
                                 .entryTtl(Duration.ofMinutes(1))
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                                         .fromSerializer(new Jackson2JsonRedisSerializer<>(ItemDto.class))
+                                )
+                )
+                .withCacheConfiguration("items",
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .entryTtl(Duration.ofMinutes(1))
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                                        .fromSerializer(new Jackson2JsonRedisSerializer<>(ItemPageDto.class))
                                 )
                 );
     }
