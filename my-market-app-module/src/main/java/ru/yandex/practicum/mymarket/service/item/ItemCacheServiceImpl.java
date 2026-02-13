@@ -32,7 +32,10 @@ public class ItemCacheServiceImpl implements ItemCacheService {
     }
 
     @Override
-    @Cacheable(value = "items", key = "#itemSearchRequestDto")
+    @Cacheable(value = "item_pages", key = """
+            #itemSearchRequestDto.sort + ":" + #itemSearchRequestDto.pageNumber + ":" + #itemSearchRequestDto.pageSize
+            + ":" + T(java.util.Objects).toString(#itemSearchRequestDto.search, "")
+            """, condition = "#itemSearchRequestDto.search == null || #itemSearchRequestDto.search.length() < 50")
     public Mono<ItemPageDto> findItems(ItemSearchRequestDto itemSearchRequestDto) {
         log.debug("Items not found in cache, requested from db: criteria={}", itemSearchRequestDto);
 

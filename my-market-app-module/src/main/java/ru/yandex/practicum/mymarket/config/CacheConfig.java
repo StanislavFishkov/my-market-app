@@ -1,5 +1,6 @@
 package ru.yandex.practicum.mymarket.config;
 
+import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -16,18 +17,26 @@ import java.time.Duration;
 @Configuration
 public class CacheConfig {
     @Bean
-    public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
+    public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(CacheProperties cacheProperties) {
+        RedisCacheConfiguration defaultConfig0 = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(cacheProperties.getRedis().getTimeToLive())
+                .prefixCacheNameWith(cacheProperties.getRedis().getKeyPrefix() != null
+                        ? cacheProperties.getRedis().getKeyPrefix()
+                        : "");
+
+        RedisCacheConfiguration defaultConfig = cacheProperties.getRedis().isCacheNullValues() ? defaultConfig0 :
+                defaultConfig0.disableCachingNullValues();
+
         return builder -> builder
                 .withCacheConfiguration("item",
-                        RedisCacheConfiguration.defaultCacheConfig()
-                                .entryTtl(Duration.ofMinutes(1))
+                        defaultConfig
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                                         .fromSerializer(new Jackson2JsonRedisSerializer<>(ItemDto.class))
                                 )
                 )
-                .withCacheConfiguration("items",
-                        RedisCacheConfiguration.defaultCacheConfig()
-                                .entryTtl(Duration.ofMinutes(1))
+                .withCacheConfiguration("item_pages",
+                        defaultConfig
+                                .entryTtl(Duration.ofMinutes(10))
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                                         .fromSerializer(new Jackson2JsonRedisSerializer<>(ItemPageDto.class))
                                 )
