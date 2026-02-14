@@ -11,14 +11,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.yandex.practicum.mymarket.config.PostgresSQLTestContainer;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
+import ru.yandex.practicum.mymarket.model.cart.CartItem;
 import ru.yandex.practicum.mymarket.model.item.Item;
+import ru.yandex.practicum.mymarket.repository.cart.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.item.ItemRepository;
-import ru.yandex.practicum.mymarket.service.item.ItemService;
+import ru.yandex.practicum.mymarket.service.cart.CartService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @SpringBootTest
 @AutoConfigureWebTestClient
@@ -28,10 +31,13 @@ class CartControllerTest extends PostgresSQLTestContainer {
     private WebTestClient webTestClient;
 
     @MockitoSpyBean
-    private ItemService itemService;
+    private CartService cartService;
 
     @MockitoSpyBean
     private ItemRepository itemRepository;
+
+    @MockitoSpyBean
+    private CartItemRepository cartItemRepository;
 
     @Test
     @SneakyThrows
@@ -41,7 +47,6 @@ class CartControllerTest extends PostgresSQLTestContainer {
                 .title("title")
                 .description("description")
                 .price(100L)
-                .count(0)
                 .build();
         String expectedRedirectUrl = "/cart/items";
 
@@ -63,21 +68,22 @@ class CartControllerTest extends PostgresSQLTestContainer {
                 .expectHeader().valueMatches("Location", expectedRedirectUrl);
 
         // check item count
-        Item updatedItem = itemRepository.findById(item.getId()).block();
-        assertThat(updatedItem)
+        CartItem cartItem = cartItemRepository.findByItemId(item.getId()).block();
+        assertThat(cartItem)
                 .isNotNull()
-                .extracting(Item::getCount)
+                .extracting(CartItem::getCount)
                 .isEqualTo(1);
 
         // verify calls
-        verify(itemService, only()).changeItemCount(item.getId(), CartItemAction.PLUS);
+        verify(cartService, only()).changeItemCount(item.getId(), CartItemAction.PLUS);
+        verifyNoInteractions(itemRepository);
 
-        ArgumentCaptor<Item> captor = ArgumentCaptor.forClass(Item.class);
-        verify(itemRepository, times(1)).save(captor.capture());
+        ArgumentCaptor<CartItem> captor = ArgumentCaptor.forClass(CartItem.class);
+        verify(cartItemRepository, times(1)).save(captor.capture());
 
-        Item savedItem = captor.getValue();
-        assertThat(savedItem.getCount()).isEqualTo(1);
-        assertThat(savedItem.getTitle()).isEqualTo("title");
+        CartItem savedCartItem = captor.getValue();
+        assertThat(savedCartItem.getCount()).isEqualTo(1);
+        assertThat(savedCartItem.getItemId()).isEqualTo(item.getId());
 
         // check redirect url
         webTestClient.get()

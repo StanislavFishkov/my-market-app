@@ -8,3 +8,5 @@ spring:
     password: admin
   liquibase:
     contexts: no
+  cache:
+    type: none
