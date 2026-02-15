@@ -30,6 +30,10 @@ spring:
     ansi:
       enabled: ALWAYS
 
+payment:
+  server:
+    url: "http://localhost:8081"
+
 logging:
   level:
     root: info

@@ -10,3 +10,7 @@ spring:
     contexts: no
   cache:
     type: none
+
+payment:
+  server:
+    url: "http://localhost:8081"
