@@ -11,8 +11,27 @@ import reactor.core.publisher.Mono;
 public class ErrorHandler {
     @ExceptionHandler(NotFoundException.class)
     public Mono<String> handleNotFound(NotFoundException ex, Model model, ServerWebExchange exchange) {
-        exchange.getResponse().setStatusCode(HttpStatus.NOT_FOUND);
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return handleException(ex, model, exchange, status);
+    }
+
+    @ExceptionHandler(InsufficientFundsException.class)
+    public Mono<String> handleInsufficientFunds(InsufficientFundsException ex, Model model, ServerWebExchange exchange) {
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+        return handleException(ex, model, exchange, status);
+    }
+
+    @ExceptionHandler(PaymentServiceUnavailableException.class)
+    public Mono<String> handlePaymentServiceUnavailable(PaymentServiceUnavailableException ex, Model model, ServerWebExchange exchange) {
+        HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+        return handleException(ex, model, exchange, status);
+    }
+
+    private Mono<String> handleException(Exception ex, Model model, ServerWebExchange exchange, HttpStatus status) {
+        exchange.getResponse().setStatusCode(status);
         model.addAttribute("message", ex.getMessage());
-        return Mono.just("error/404");
+        model.addAttribute("errorCode", status.value());
+        model.addAttribute("errorName", status.toString());
+        return Mono.just("error/error");
     }
 }

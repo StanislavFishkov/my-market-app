@@ -4,13 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.order.OrderDto;
+import ru.yandex.practicum.mymarket.exception.InsufficientFundsException;
 import ru.yandex.practicum.mymarket.exception.NotFoundException;
+import ru.yandex.practicum.mymarket.exception.PaymentServiceUnavailableException;
 import ru.yandex.practicum.mymarket.mapper.item.ItemMapper;
 import ru.yandex.practicum.mymarket.mapper.order.OrderMapper;
 import ru.yandex.practicum.mymarket.model.order.Order;
+import ru.yandex.practicum.mymarket.payment.api.PaymentApi;
+import ru.yandex.practicum.mymarket.payment.dto.PaymentRequest;
 import ru.yandex.practicum.mymarket.repository.order.OrderItemRepository;
 import ru.yandex.practicum.mymarket.repository.order.OrderRepository;
 import ru.yandex.practicum.mymarket.service.cart.CartService;
@@ -25,6 +30,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final CartService cartService;
 
+    private final PaymentApi paymentApi;
+
     private final OrderMapper orderMapper;
     private final ItemMapper itemMapper;
 
@@ -38,16 +45,34 @@ public class OrderServiceImpl implements OrderService {
                         return Mono.error(new NotFoundException("Cart items not found"));
                     }
 
-                    return orderRepository.save(new Order())
-                            .flatMap(order -> {
-                                order.setItems(itemMapper.toOrderItems(cartItems, order.getId()));
-                                return orderItemRepository.saveAll(order.getItems())
-                                        .then(Mono.just(order.getId()));
+                    long total = cartItems.stream().mapToLong(item -> item.getPrice() * item.getCount()).sum();
+
+                    return paymentApi.makePayment(PaymentRequest.builder().amount(total).build())
+                            .onErrorMap(ex -> {
+                                if (ex instanceof WebClientResponseException webClientException) {
+                                    int httpStatusCode = webClientException.getStatusCode().value();
+                                    return switch (httpStatusCode) {
+                                        case 400 -> new PaymentServiceUnavailableException("Bad Request", ex);
+                                        case 422 -> new InsufficientFundsException("Not enough funds to pay", ex);
+                                        default ->
+                                                new PaymentServiceUnavailableException("Payment service unavailable: " +
+                                                        httpStatusCode, ex);
+                                    };
+                                }
+
+                                return new PaymentServiceUnavailableException("Payment service unavailable", ex);
                             })
-                            .flatMap(orderId -> cartService.deleteAllCartItems()
-                                        .then(Mono.just(orderId))
-                            )
-                            .doOnNext(orderId -> log.debug("Order created: id={}", orderId));
+                            .then(orderRepository.save(new Order())
+                                    .flatMap(order -> {
+                                        order.setItems(itemMapper.toOrderItems(cartItems, order.getId()));
+                                        return orderItemRepository.saveAll(order.getItems())
+                                                .then(Mono.just(order.getId()));
+                                    })
+                                    .flatMap(orderId -> cartService.deleteAllCartItems()
+                                            .then(Mono.just(orderId))
+                                    )
+                                    .doOnNext(orderId -> log.debug("Order created: id={}", orderId))
+                            );
                 });
     }
 

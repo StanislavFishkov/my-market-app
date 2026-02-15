@@ -3,12 +3,12 @@
 
 <head>
     <meta charset="utf-8">
-    <title>404 Not Found</title>
+    <title th:text="${errorName}">Error</title>
 </head>
 
 <body>
-    <h1>Страница не найдена</h1>
-        <p th:text="${message}">The resource was not found.</p>
+    <h1 th:text="${'Произошла ошибка. Код ошибки ' + errorCode}"> </h1>
+    <h2 th:text="${message}">Error text.</h2>
     <a href="/">Вернуться на главную</a>
 </body>
 

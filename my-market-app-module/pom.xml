@@ -129,11 +129,35 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 
-			<!-- Maven Compiler Plugin -->
+			<!-- OpenApi Generator -->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>7.19.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/payment-api.yaml</inputSpec>
+							<generatorName>java</generatorName>
+							<apiPackage>ru.yandex.practicum.mymarket.payment.api</apiPackage>
+							<invokerPackage>ru.yandex.practicum.mymarket.payment</invokerPackage>
+							<modelPackage>ru.yandex.practicum.mymarket.payment.dto</modelPackage>
+							<addCompileSourceRoot>true</addCompileSourceRoot>
+							<configOptions>
+								<library>webclient</library>
+								<useJakartaEe>true</useJakartaEe>
+								<openApiNullable>false</openApiNullable>
+								<useTags>true</useTags>
+								<generateBuilders>true</generateBuilders>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
+
 		</plugins>
 	</build>
 
