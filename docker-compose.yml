@@ -7,8 +7,13 @@ services:
     depends_on:
       mma-cache:
         condition: service_healthy
+      payment-server:
+        condition: service_healthy
     networks:
       - mma-net
+    environment:
+      SPRING_DATA_REDIS_HOST: mma-cache
+      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: "curl --fail --silent my-market-app:8080/actuator/health | grep UP || exit 1"
       timeout: 5s
@@ -29,6 +34,19 @@ services:
       interval: 20s
       retries: 5
       start_period: 5s
+
+  payment-server:
+    build: payment-module
+    container_name:   payment-server
+    ports:
+      - "8081:8081"
+    networks:
+      - mma-net
+    healthcheck:
+      test: "curl --fail --silent payment-server:8081/actuator/health | grep UP || exit 1"
+      timeout: 5s
+      interval: 20s
+      retries: 5
 
 #  mma-db:
 #    image: postgres:16.1
