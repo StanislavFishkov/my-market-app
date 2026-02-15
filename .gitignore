@@ -38,7 +38,7 @@ bin/
 .DS_Store
 
 #database
-db/
+/db/
 
 #logs
 logs/
