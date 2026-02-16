@@ -77,6 +77,12 @@
 			<artifactId>mapstruct</artifactId>
 		</dependency>
 
+		<!-- Apache Commons Codec -->
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
+
 		<!-- TEST -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -146,6 +152,8 @@
 							<invokerPackage>ru.yandex.practicum.mymarket.payment</invokerPackage>
 							<modelPackage>ru.yandex.practicum.mymarket.payment.dto</modelPackage>
 							<addCompileSourceRoot>true</addCompileSourceRoot>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
 							<configOptions>
 								<library>webclient</library>
 								<useJakartaEe>true</useJakartaEe>

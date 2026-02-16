@@ -2,6 +2,7 @@ package ru.yandex.practicum.mymarket.dto.item;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.apache.commons.codec.digest.DigestUtils;
 
 public record ItemSearchRequestDto(String search, ItemSort sort, Integer pageNumber, Integer pageSize) {
     public ItemSearchRequestDto {
@@ -19,5 +20,11 @@ public record ItemSearchRequestDto(String search, ItemSort sort, Integer pageNum
                 pageSize,
                 sort.toSpringSort()
         );
+    }
+
+    public String cacheKey() {
+        String searchPart = (search == null) ? "" :
+                (search.length() <= 32 ? search : DigestUtils.md5Hex(search));
+        return "%s:%d:%d:%s".formatted(sort, pageNumber, pageSize, searchPart);
     }
 }

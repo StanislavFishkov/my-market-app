@@ -6,12 +6,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.mymarket.dto.cart.CartDto;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.dto.item.ItemWithCountDto;
 import ru.yandex.practicum.mymarket.mapper.item.ItemMapper;
 import ru.yandex.practicum.mymarket.model.cart.CartItem;
+import ru.yandex.practicum.mymarket.payment.api.BalanceApi;
+import ru.yandex.practicum.mymarket.payment.dto.BalanceResponse;
 import ru.yandex.practicum.mymarket.repository.cart.CartItemRepository;
 import ru.yandex.practicum.mymarket.service.item.ItemCacheService;
+
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -21,6 +27,8 @@ public class CartServiceImpl implements CartService {
     private final ItemCacheService itemCacheService;
     private final CartItemRepository cartItemRepository;
     private final ItemMapper itemMapper;
+
+    private final BalanceApi balanceApi;
 
     @Override
     public Flux<ItemWithCountDto> findCartItems() {
@@ -40,16 +48,13 @@ public class CartServiceImpl implements CartService {
                                 .build()))
                 )
                 .flatMap(existing -> {
-                    int count = existing.getCount();
-
-                    switch (cartItemAction) {
-                        case PLUS -> existing.setCount(count + 1);
-                        case MINUS -> existing.setCount(Math.max(0, count - 1));
-                        case DELETE -> existing.setCount(0);
-                        default -> {
-                            return Mono.error(new IllegalStateException("Unexpected value: " + cartItemAction));
-                        }
-                    }
+                    existing.setCount(
+                            switch (cartItemAction) {
+                                case PLUS -> existing.getCount() + 1;
+                                case MINUS -> Math.max(0, existing.getCount() - 1);
+                                case DELETE -> 0;
+                            }
+                    );
 
                     if (existing.getCount() > 0) {
                         return cartItemRepository.save(existing);
@@ -65,5 +70,30 @@ public class CartServiceImpl implements CartService {
     @Override
     public Mono<Void> deleteAllCartItems() {
         return cartItemRepository.deleteAll();
+    }
+
+    @Override
+    public Mono<CartDto> getCart() {
+        return cartItemRepository.findAll()
+                .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())
+                        .map(itemDto -> itemMapper.toDto(itemDto, cartItem.getCount()))
+                ).collectList()
+                .zipWith(balanceApi.getBalance()
+                        .map(Optional::of)
+                        .onErrorResume(ex -> Mono.just(Optional.empty()))
+                )
+                .map(tuple -> {
+                    List<ItemWithCountDto> cartItems = tuple.getT1();
+                    Optional<BalanceResponse> balanceResponse = tuple.getT2();
+
+                    CartDto cartDto = new CartDto();
+                    cartDto.setItems(cartItems);
+                    if (balanceResponse.isPresent()) {
+                        cartDto.setPaymentAvailable(true);
+                        cartDto.setBalance(balanceResponse.get().getBalance());
+                    }
+
+                    return cartDto;
+                });
     }
 }

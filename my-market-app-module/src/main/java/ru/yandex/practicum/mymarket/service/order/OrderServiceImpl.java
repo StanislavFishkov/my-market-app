@@ -50,14 +50,7 @@ public class OrderServiceImpl implements OrderService {
                     return paymentApi.makePayment(PaymentRequest.builder().amount(total).build())
                             .onErrorMap(ex -> {
                                 if (ex instanceof WebClientResponseException webClientException) {
-                                    int httpStatusCode = webClientException.getStatusCode().value();
-                                    return switch (httpStatusCode) {
-                                        case 400 -> new PaymentServiceUnavailableException("Bad Request", ex);
-                                        case 422 -> new InsufficientFundsException("Not enough funds to pay", ex);
-                                        default ->
-                                                new PaymentServiceUnavailableException("Payment service unavailable: " +
-                                                        httpStatusCode, ex);
-                                    };
+                                    return mapHttpStatusToException(webClientException.getStatusCode().value(), ex);
                                 }
 
                                 return new PaymentServiceUnavailableException("Payment service unavailable", ex);
@@ -106,5 +99,13 @@ public class OrderServiceImpl implements OrderService {
                     order.setItems(items);
                     return order;
                 });
+    }
+
+    private RuntimeException mapHttpStatusToException(int statusCode, Throwable ex) {
+        return switch (statusCode) {
+            case 400 -> new PaymentServiceUnavailableException("Bad Request", ex);
+            case 422 -> new InsufficientFundsException("Not enough funds to pay", ex);
+            default -> new PaymentServiceUnavailableException("Payment service unavailable: " + statusCode, ex);
+        };
     }
 }

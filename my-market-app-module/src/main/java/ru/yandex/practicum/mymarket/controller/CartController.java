@@ -13,13 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemActionDto;
 import ru.yandex.practicum.mymarket.dto.cart.IdRequired;
-import ru.yandex.practicum.mymarket.dto.item.ItemWithCountDto;
-import ru.yandex.practicum.mymarket.payment.api.BalanceApi;
-import ru.yandex.practicum.mymarket.payment.dto.BalanceResponse;
 import ru.yandex.practicum.mymarket.service.cart.CartService;
-
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Validated
@@ -28,29 +22,17 @@ import java.util.Optional;
 @RequestMapping("/cart")
 public class CartController {
     private final CartService cartService;
-    private final BalanceApi balanceApi;
 
     @GetMapping("/items")
     public Mono<String> getCartItems(Model model) {
         log.info("GET /cart/items");
 
-        return cartService.findCartItems()
-                .collectList()
-                .zipWith(balanceApi.getBalance()
-                        .map(Optional::of)
-                        .onErrorResume(ex -> Mono.just(Optional.empty()))
-                )
-                .doOnNext(tuple -> {
-                    List<ItemWithCountDto> cartItems = tuple.getT1();
-
-                    long balance = tuple.getT2().map(BalanceResponse::getBalance).orElse(-1L);
-
-                    long total = cartItems.stream().mapToLong(item -> item.getPrice() * item.getCount()).sum();
-
-                    model.addAttribute("items", cartItems);
-                    model.addAttribute("total", total);
-                    model.addAttribute("paymentUnavailable", balance == -1);
-                    model.addAttribute("canCheckout", balance >= total);
+        return cartService.getCart()
+                .doOnNext(cart -> {
+                    model.addAttribute("items", cart.getItems());
+                    model.addAttribute("total", cart.getTotalSum());
+                    model.addAttribute("paymentUnavailable", !cart.isPaymentAvailable());
+                    model.addAttribute("canCheckout", cart.canCheckout());
                 })
                 .thenReturn("cart");
     }
