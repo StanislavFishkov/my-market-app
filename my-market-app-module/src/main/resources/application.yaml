@@ -1,0 +1,59 @@
+server.port: 8080
+
+spring:
+  application:
+    name: my-market-app
+  r2dbc:
+    url: r2dbc:h2:file:///${project.dir:.}/db/data;MODE=PostgreSQL;DEFAULT_NULL_ORDERING=HIGH
+    username: admin
+    password: admin
+  liquibase:
+    enabled: true
+    url: jdbc:h2:file:${project.dir:.}/db/data;MODE=PostgreSQL;DEFAULT_NULL_ORDERING=HIGH
+    user: admin
+    password: admin
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    contexts: testdata-init
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2s
+      lettuce:
+        pool:
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 2s
+        shutdown-timeout: 500ms
+  cache:
+    type: redis
+    redis:
+      cache-null-values: false
+      time-to-live: PT5M
+  sql:
+    init:
+      mode: never
+  output:
+    ansi:
+      enabled: ALWAYS
+
+payment:
+  server:
+    url: "http://localhost:8081"
+
+logging:
+  level:
+    root: info
+    org:
+      springframework:
+        web:
+          reactive:
+            function:
+              client: info
+        data:
+          r2dbc: debug
+    io:
+      r2dbc:
+        spi: debug
+        h2: debug

@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: sfishkov
+      context: testdata-init
+      changes:
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Laptop"
+              - column:
+                  name: description
+                  value: "Best laptop on the market"
+              - column:
+                  name: img_path
+                  value: "no_image.jpg"
+              - column:
+                  name: price
+                  valueNumeric: 1000
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Mouse"
+              - column:
+                  name: description
+                  value: "Mediocre mouse"
+              - column:
+                  name: img_path
+                  value: "no_image.jpg"
+              - column:
+                  name: price
+                  valueNumeric: 20
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Computer"
+              - column:
+                  name: description
+                  value: "Worst computer ever"
+              - column:
+                  name: img_path
+                  value: "no_image.jpg"
+              - column:
+                  name: price
+                  valueNumeric: 50
