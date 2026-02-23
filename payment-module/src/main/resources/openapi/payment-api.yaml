@@ -29,6 +29,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BalanceResponse'
+      security:
+        - bearerAuth: [payment-balance-read]
+
   /payments:
     post:
       summary: Make payment
@@ -48,8 +51,20 @@ paths:
           description: Bad request
         422:
           description: Insufficient balance
+      security:
+        - bearerAuth: [payment-balance-write]
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: http://localhost:9090/realms/mma/protocol/openid-connect/token
+          scopes:
+            payment-balance-read: read balance
+            payment-balance-write: write payments
+
   schemas:
     BalanceResponse:
       type: object

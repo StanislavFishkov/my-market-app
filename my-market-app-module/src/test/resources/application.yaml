@@ -1,6 +1,8 @@
 server.port: 0
 
 spring:
+  profiles:
+    active: Test
   datasource:
     url: jdbc:h2:mem:testdb/db/data;MODE=PostgreSQL;DEFAULT_NULL_ORDERING=HIGH
     driverClassName: org.h2.Driver
@@ -10,6 +12,13 @@ spring:
     contexts: no
   cache:
     type: none
+  security:
+    oauth2:
+      client:
+        registration: { }  # пусто
+      resourceserver:
+        jwt:
+          issuer-uri: ""
 
 payment:
   server:

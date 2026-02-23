@@ -7,8 +7,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import ru.yandex.practicum.mymarket.config.NoSecurityConfig;
 import ru.yandex.practicum.mymarket.config.PostgresSQLTestContainer;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.model.cart.CartItem;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @SpringBootTest
+@Import(NoSecurityConfig.class)
 @AutoConfigureWebTestClient
 class CartControllerTest extends PostgresSQLTestContainer {
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -18,6 +19,7 @@ public class PaymentDelegate implements PaymentsApiDelegate {
     private final PaymentProperties paymentProperties;
 
     @Override
+    @PreAuthorize("hasAuthority(T(ru.yandex.practicum.payment.config.SecurityConfig).PAYMENT_BALANCE_WRITE_AUTHORITY)")
     public Mono<ResponseEntity<Void>> makePayment(Mono<PaymentRequest> paymentRequest, ServerWebExchange exchange) {
         return paymentRequest.flatMap(request -> {
             if (request.getAmount() <= paymentProperties.balance())

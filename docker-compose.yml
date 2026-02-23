@@ -17,6 +17,7 @@ services:
       SPRING_DATA_REDIS_HOST: mma-cache
       SPRING_DATA_REDIS_PORT: 6379
       PAYMENT_SERVER_URL: http://payment-server:8081
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/mma
     healthcheck:
       test: "curl --fail --silent my-market-app:8080/actuator/health | grep UP || exit 1"
       timeout: 5s
@@ -48,6 +49,8 @@ services:
         condition: service_healthy
     networks:
       - mma-net
+    environment:
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/mma
     healthcheck:
       test: "curl --fail --silent payment-server:8081/actuator/health | grep UP || exit 1"
       timeout: 5s
