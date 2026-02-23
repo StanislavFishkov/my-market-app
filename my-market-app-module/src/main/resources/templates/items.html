@@ -18,8 +18,32 @@
                     <h2>
                         <span class="badge text-bg-success">Витрина магазина</span>
                     </h2>
-                    <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
-                    <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
+
+                    <div class="flex-fill text-center">
+                        <span th:if="${authentication?.authenticated}" class="h3">
+                            Привет, <span th:text="${authentication.name}"></span>!
+                        </span>
+                    </div>
+
+                    <!-- Показываем кнопки только авторизованным -->
+                    <div th:if="${authentication?.authenticated}" class="d-flex align-items-center ms-auto gap-2">
+
+                        <!-- Кнопка Заказы -->
+                        <a href="/orders" class="btn btn-secondary bi bi-file-earmark-text"> Заказы</a>
+
+                        <!-- Кнопка Корзина -->
+                        <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
+
+                        <!-- Logout -->
+                        <form th:action="@{/logout}" method="post" class="d-inline ms-2">
+                            <button class="btn btn-secondary bi bi-box-arrow-in-left" type="submit"> Выйти</button>
+                        </form>
+                    </div>
+
+                    <!-- Для неавторизованных показываем только Login -->
+                    <div th:if="${authentication == null or !authentication.authenticated}" class="ms-auto">
+                        <a class="btn btn-secondary bi bi-box-arrow-in-right" th:href="@{/login}"> Войти</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,7 +86,7 @@
                             <span class="badge text-bg-success justify-content-end" th:text="${item.price}+' руб.'"></span>
                         </h5>
                         <p class="card-text" th:text="${item.description}"></p>
-                        <form method="post" th:action="@{/items}">
+                        <form th:if="${authentication?.authenticated}" method="post" th:action="@{/items}">
                             <div class="hstack gap-3">
                                 <input type="hidden" name="id" th:value="${item.id}">
                                 <input type="hidden" name="search" th:value="${search}">

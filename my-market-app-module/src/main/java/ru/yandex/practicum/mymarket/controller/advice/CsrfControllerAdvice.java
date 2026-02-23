@@ -1,4 +1,4 @@
-package ru.yandex.practicum.mymarket.config;
+package ru.yandex.practicum.mymarket.controller.advice;
 
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.ControllerAdvice;

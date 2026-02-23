@@ -6,12 +6,23 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
+import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
+
+import java.net.URI;
 
 @Configuration
 @Profile("!Test")
@@ -20,12 +31,36 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfig {
     @Bean
     SecurityWebFilterChain securityFilterChain(ServerHttpSecurity security) {
+        ServerAuthenticationSuccessHandler redirectLoginHandler = new RedirectServerAuthenticationSuccessHandler("/");
+        RedirectServerLogoutSuccessHandler redirectLogoutHandler= new RedirectServerLogoutSuccessHandler();
+        redirectLogoutHandler.setLogoutSuccessUrl(URI.create("/"));
+
         return security
                 .authorizeExchange(requests -> requests
-                        .pathMatchers("/", "/actuator/**").permitAll()
-                        .anyExchange().permitAll()
+                        .pathMatchers("/", "/items/**", "/images/**", "/actuator/**").permitAll()
+                        .anyExchange().authenticated()
                 )
+                .formLogin(form -> form
+                        .authenticationSuccessHandler(redirectLoginHandler))
+                .logout(logout -> logout
+                        .logoutSuccessHandler(redirectLogoutHandler))
                 .build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public ReactiveUserDetailsService userDetailsService(PasswordEncoder encoder) {
+        UserDetails user = User
+                .withUsername("user")
+                .password(encoder.encode("password"))
+                .roles("USER")
+                .build();
+
+        return new MapReactiveUserDetailsService(user);
     }
 
     @Bean
