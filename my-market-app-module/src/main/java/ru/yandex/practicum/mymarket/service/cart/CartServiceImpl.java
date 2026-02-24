@@ -31,8 +31,8 @@ public class CartServiceImpl implements CartService {
     private final BalanceApi balanceApi;
 
     @Override
-    public Flux<ItemWithCountDto> findCartItems() {
-        return cartItemRepository.findAll()
+    public Flux<ItemWithCountDto> findCartItems(Long userId) {
+        return cartItemRepository.findAllByUserId(userId)
                 .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())
                         .map(itemDto -> itemMapper.toDto(itemDto, cartItem.getCount()))
                 );
@@ -40,10 +40,11 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public Mono<Void> changeItemCount(Long itemId, CartItemAction cartItemAction) {
-        return cartItemRepository.findByItemId(itemId)
+    public Mono<Void> changeItemCount(Long userId, Long itemId, CartItemAction cartItemAction) {
+        return cartItemRepository.findByUserIdAndItemId(userId, itemId)
                 .switchIfEmpty(Mono.defer(() ->
                         Mono.just(CartItem.builder()
+                                .userId(userId)
                                 .itemId(itemId)
                                 .build()))
                 )
@@ -68,13 +69,13 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Mono<Void> deleteAllCartItems() {
-        return cartItemRepository.deleteAll();
+    public Mono<Void> deleteAllCartItems(Long userId) {
+        return cartItemRepository.deleteAllByUserId(userId);
     }
 
     @Override
-    public Mono<CartDto> getCart() {
-        return cartItemRepository.findAll()
+    public Mono<CartDto> getCart(Long userId) {
+        return cartItemRepository.findAllByUserId(userId)
                 .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())
                         .map(itemDto -> itemMapper.toDto(itemDto, cartItem.getCount()))
                 ).collectList()

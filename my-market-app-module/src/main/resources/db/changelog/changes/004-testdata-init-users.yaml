@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: sfishkov
+      context: testdata-init
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: login
+                  value: "test"
+              - column:
+                  name: password
+                  # Пароль = test
+                  value: "$2a$10$WjKYIeLAtYKknZ8CVt4/G.G2hTZXdsb7DT7NhSyD6s1K8Od.W2/nu"
+              - column:
+                  name: name
+                  value: "Тест Тестович"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: login
+                  value: "test2"
+              - column:
+                  name: password
+                  # Пароль = test
+                  value: "$2a$10$WjKYIeLAtYKknZ8CVt4/G.G2hTZXdsb7DT7NhSyD6s1K8Od.W2/nu"
+              - column:
+                  name: name
+                  value: "Петр"

@@ -5,3 +5,9 @@ databaseChangeLog:
   - include:
       file: /changes/002-testdata-init.yaml
       relativeToChangelogFile: true
+  - include:
+      file: /changes/003-schema-add-users.sql
+      relativeToChangelogFile: true
+  - include:
+      file: /changes/004-testdata-init-users.yaml
+      relativeToChangelogFile: true

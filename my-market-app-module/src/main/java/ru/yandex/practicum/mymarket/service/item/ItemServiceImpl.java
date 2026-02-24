@@ -24,12 +24,12 @@ public class ItemServiceImpl implements ItemService {
     private final ItemMapper itemMapper;
 
     @Override
-    public Mono<ItemWithCountDto> getItemById(Long itemId) {
+    public Mono<ItemWithCountDto> getItemById(Long userId, Long itemId) {
         log.debug("Item requested: id={}", itemId);
 
         return itemCacheService.getItemById(itemId)
                 .flatMap(item -> cartItemRepository
-                        .findByItemId(itemId)
+                        .findByUserIdAndItemId(userId, itemId)
                         .map(CartItem::getCount)
                         .defaultIfEmpty(0)
                         .map(count -> itemMapper.toDto(item, count))
@@ -37,19 +37,23 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Mono<Page<ItemWithCountDto>> findItems(ItemSearchRequestDto itemSearchRequestDto) {
+    public Mono<Page<ItemWithCountDto>> findItems(Long userId, ItemSearchRequestDto itemSearchRequestDto) {
         log.debug("Items requested: criteria={}", itemSearchRequestDto);
 
         return itemCacheService.findItems(itemSearchRequestDto)
                 .flatMap(pageDto -> {
                     var page = new PageImpl<>(pageDto.getContent(), itemSearchRequestDto.toPageable(), pageDto.getTotal());
 
-                    return cartItemRepository.findAllByItemIdIn(page.getContent().stream().map(ItemDto::getId).toList())
-                            .collectMap(CartItem::getItemId, CartItem::getCount)
-                            .map(cartItemMap -> page.map(
-                                    itemDto ->
-                                            itemMapper.toDto(itemDto, cartItemMap.getOrDefault(itemDto.getId(), 0)))
-                            );
+                    if (userId != null) {
+                        return cartItemRepository.findAllByUserIdAndItemIdIn(userId, page.getContent().stream().map(ItemDto::getId).toList())
+                                .collectMap(CartItem::getItemId, CartItem::getCount)
+                                .map(cartItemMap -> page.map(
+                                        itemDto ->
+                                                itemMapper.toDto(itemDto, cartItemMap.getOrDefault(itemDto.getId(), 0)))
+                                );
+                    } else  {
+                        return Mono.just(page.map(itemDto -> itemMapper.toDto(itemDto, 0)));
+                    }
                 });
     }
 }

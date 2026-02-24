@@ -21,7 +21,7 @@
 
                     <div class="flex-fill text-center">
                         <span th:if="${authentication?.authenticated}" class="h3">
-                            Привет, <span th:text="${authentication.name}"></span>!
+                            Привет, <span th:text="${authentication.principal.name}"></span>!
                         </span>
                     </div>
 

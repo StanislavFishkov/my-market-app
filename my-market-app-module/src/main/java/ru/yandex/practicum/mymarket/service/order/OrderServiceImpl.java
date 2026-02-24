@@ -37,8 +37,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Mono<Long> createOrder() {
-        return cartService.findCartItems()
+    public Mono<Long> createOrder(Long userId) {
+        return cartService.findCartItems(userId)
                 .collectList()
                 .flatMap(cartItems -> {
                     if (cartItems.isEmpty()) {
@@ -55,13 +55,13 @@ public class OrderServiceImpl implements OrderService {
 
                                 return new PaymentServiceUnavailableException("Payment service unavailable", ex);
                             })
-                            .then(orderRepository.save(new Order())
+                            .then(orderRepository.save(Order.builder().userId(userId).build())
                                     .flatMap(order -> {
                                         order.setItems(itemMapper.toOrderItems(cartItems, order.getId()));
                                         return orderItemRepository.saveAll(order.getItems())
                                                 .then(Mono.just(order.getId()));
                                     })
-                                    .flatMap(orderId -> cartService.deleteAllCartItems()
+                                    .flatMap(orderId -> cartService.deleteAllCartItems(userId)
                                             .then(Mono.just(orderId))
                                     )
                                     .doOnNext(orderId -> log.debug("Order created: id={}", orderId))
@@ -78,10 +78,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Flux<OrderDto> findOrders() {
+    public Flux<OrderDto> findOrders(Long userId) {
         log.debug("Orders requested");
 
-        return orderRepository.findAll()
+        return orderRepository.findAllByUserId(userId)
                 .flatMap(this::getAndSetOrderItems)
                 .map(orderMapper::toDto);
     }

@@ -20,6 +20,9 @@ public class CartItem {
     @Id
     Long id;
 
+    @Column("user_id")
+    Long userId;
+
     @Column("item_id")
     Long itemId;
 

@@ -7,11 +7,11 @@ import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.dto.item.ItemWithCountDto;
 
 public interface CartService {
-    Flux<ItemWithCountDto> findCartItems();
+    Flux<ItemWithCountDto> findCartItems(Long userId);
 
-    Mono<Void> changeItemCount(Long itemId, CartItemAction cartItemAction);
+    Mono<Void> changeItemCount(Long userId, Long itemId, CartItemAction cartItemAction);
 
-    Mono<Void> deleteAllCartItems();
+    Mono<Void> deleteAllCartItems(Long userId);
 
-    Mono<CartDto> getCart();
+    Mono<CartDto> getCart(Long userId);
 }
