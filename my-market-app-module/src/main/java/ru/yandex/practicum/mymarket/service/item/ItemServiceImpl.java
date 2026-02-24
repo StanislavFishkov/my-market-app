@@ -28,11 +28,17 @@ public class ItemServiceImpl implements ItemService {
         log.debug("Item requested: id={}", itemId);
 
         return itemCacheService.getItemById(itemId)
-                .flatMap(item -> cartItemRepository
-                        .findByUserIdAndItemId(userId, itemId)
-                        .map(CartItem::getCount)
-                        .defaultIfEmpty(0)
-                        .map(count -> itemMapper.toDto(item, count))
+                .flatMap(item -> {
+                            if (userId == null) {
+                                return Mono.just(itemMapper.toDto(item, 0));
+                            }
+
+                            return cartItemRepository
+                                    .findByUserIdAndItemId(userId, itemId)
+                                    .map(CartItem::getCount)
+                                    .defaultIfEmpty(0)
+                                    .map(count -> itemMapper.toDto(item, count));
+                        }
                 );
     }
 
@@ -51,7 +57,7 @@ public class ItemServiceImpl implements ItemService {
                                         itemDto ->
                                                 itemMapper.toDto(itemDto, cartItemMap.getOrDefault(itemDto.getId(), 0)))
                                 );
-                    } else  {
+                    } else {
                         return Mono.just(page.map(itemDto -> itemMapper.toDto(itemDto, 0)));
                     }
                 });

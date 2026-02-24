@@ -2,6 +2,7 @@ package ru.yandex.practicum.mymarket.service.cart;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -31,6 +32,7 @@ public class CartServiceImpl implements CartService {
     private final BalanceApi balanceApi;
 
     @Override
+    @PreAuthorize("#userId == authentication.principal.id")
     public Flux<ItemWithCountDto> findCartItems(Long userId) {
         return cartItemRepository.findAllByUserId(userId)
                 .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())
@@ -40,6 +42,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
+    @PreAuthorize("#userId == authentication.principal.id")
     public Mono<Void> changeItemCount(Long userId, Long itemId, CartItemAction cartItemAction) {
         return cartItemRepository.findByUserIdAndItemId(userId, itemId)
                 .switchIfEmpty(Mono.defer(() ->
@@ -69,11 +72,14 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
+    @PreAuthorize("#userId == authentication.principal.id")
     public Mono<Void> deleteAllCartItems(Long userId) {
         return cartItemRepository.deleteAllByUserId(userId);
     }
 
     @Override
+    @PreAuthorize("#userId == authentication.principal.id")
     public Mono<CartDto> getCart(Long userId) {
         return cartItemRepository.findAllByUserId(userId)
                 .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())

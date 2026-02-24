@@ -2,6 +2,8 @@ package ru.yandex.practicum.mymarket.service.order;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -37,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
+    @PreAuthorize("#userId == authentication.principal.id")
     public Mono<Long> createOrder(Long userId) {
         return cartService.findCartItems(userId)
                 .collectList()
@@ -70,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @PostAuthorize("returnObject.userId == authentication.principal.id")
     public Mono<OrderDto> getOrderById(Long orderId) {
         log.debug("Order requested: id={}", orderId);
 
@@ -78,6 +82,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @PreAuthorize("#userId == authentication.principal.id")
     public Flux<OrderDto> findOrders(Long userId) {
         log.debug("Orders requested");
 

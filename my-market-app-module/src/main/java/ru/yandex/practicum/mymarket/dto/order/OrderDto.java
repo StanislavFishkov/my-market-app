@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDto {
     Long id;
+    Long userId;
     List<OrderItemDto> items;
 
     public Long getTotalSum() {
