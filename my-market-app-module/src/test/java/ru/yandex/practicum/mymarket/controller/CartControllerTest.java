@@ -7,14 +7,22 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import ru.yandex.practicum.mymarket.config.NoSecurityConfig;
 import ru.yandex.practicum.mymarket.config.PostgresSQLTestContainer;
 import ru.yandex.practicum.mymarket.dto.cart.CartItemAction;
 import ru.yandex.practicum.mymarket.model.cart.CartItem;
 import ru.yandex.practicum.mymarket.model.item.Item;
+import ru.yandex.practicum.mymarket.model.user.User;
 import ru.yandex.practicum.mymarket.repository.cart.CartItemRepository;
 import ru.yandex.practicum.mymarket.repository.item.ItemRepository;
+import ru.yandex.practicum.mymarket.repository.user.UserRepository;
+import ru.yandex.practicum.mymarket.security.SecurityUser;
 import ru.yandex.practicum.mymarket.service.cart.CartService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @SpringBootTest
+@Import(NoSecurityConfig.class)
 @AutoConfigureWebTestClient
 class CartControllerTest extends PostgresSQLTestContainer {
 
@@ -39,10 +48,28 @@ class CartControllerTest extends PostgresSQLTestContainer {
     @MockitoSpyBean
     private CartItemRepository cartItemRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Test
     @SneakyThrows
     void shouldIncreaseCountInCart_whenActionPlusInvoked() {
         // Given
+        User user = User.builder()
+                .login("admin")
+                .password("admin")
+                .name("admin")
+                .build();
+        user = userRepository.save(user).block();
+        assertThat(user).isNotNull();
+        SecurityUser securityUser = new SecurityUser(user);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                securityUser,
+                securityUser.getPassword(),
+                securityUser.getAuthorities()
+        );
+
         Item item = Item.builder()
                 .title("title")
                 .description("description")
@@ -57,7 +84,8 @@ class CartControllerTest extends PostgresSQLTestContainer {
         Long itemId = item.getId();
 
         // When + Then
-        webTestClient.post()
+        webTestClient.mutateWith(SecurityMockServerConfigurers.mockAuthentication(authentication))
+                .post()
                 .uri(uriBuilder ->  uriBuilder
                         .path("/cart/items")
                         .queryParam("id", itemId.toString())
@@ -68,14 +96,14 @@ class CartControllerTest extends PostgresSQLTestContainer {
                 .expectHeader().valueMatches("Location", expectedRedirectUrl);
 
         // check item count
-        CartItem cartItem = cartItemRepository.findByItemId(item.getId()).block();
+        CartItem cartItem = cartItemRepository.findByUserIdAndItemId(user.getId(), item.getId()).block();
         assertThat(cartItem)
                 .isNotNull()
                 .extracting(CartItem::getCount)
                 .isEqualTo(1);
 
         // verify calls
-        verify(cartService, only()).changeItemCount(item.getId(), CartItemAction.PLUS);
+        verify(cartService, only()).changeItemCount(user.getId(), item.getId(), CartItemAction.PLUS);
         verifyNoInteractions(itemRepository);
 
         ArgumentCaptor<CartItem> captor = ArgumentCaptor.forClass(CartItem.class);
@@ -86,7 +114,8 @@ class CartControllerTest extends PostgresSQLTestContainer {
         assertThat(savedCartItem.getItemId()).isEqualTo(item.getId());
 
         // check redirect url
-        webTestClient.get()
+        webTestClient.mutateWith(SecurityMockServerConfigurers.mockAuthentication(authentication))
+                .get()
                 .uri(expectedRedirectUrl)
                 .exchange()
                 .expectStatus().isOk()

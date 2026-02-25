@@ -6,7 +6,7 @@ import ru.yandex.practicum.mymarket.dto.item.ItemWithCountDto;
 import ru.yandex.practicum.mymarket.dto.item.ItemSearchRequestDto;
 
 public interface ItemService {
-    Mono<ItemWithCountDto> getItemById(Long itemId);
+    Mono<ItemWithCountDto> getItemById(Long userId, Long itemId);
 
-    Mono<Page<ItemWithCountDto>> findItems(ItemSearchRequestDto itemSearchRequestDto);
+    Mono<Page<ItemWithCountDto>> findItems(Long userId, ItemSearchRequestDto itemSearchRequestDto);
 }

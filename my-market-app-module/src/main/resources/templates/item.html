@@ -16,9 +16,30 @@
                     <h2>
                         <span class="badge text-bg-success">Витрина магазина</span>
                     </h2>
-                    <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
-                    <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
-                    <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
+
+                    <div class="flex-fill text-center">
+                        <span th:if="${authentication?.authenticated}" class="h3">
+                            Привет, <span th:text="${authentication.principal.name}"></span>!
+                        </span>
+                    </div>
+
+                    <!-- Показываем кнопки только авторизованным -->
+                    <div th:if="${authentication?.authenticated}" class="d-flex align-items-center ms-auto gap-2">
+                        <a href="/orders" class="btn btn-secondary bi bi-file-earmark-text"> Заказы</a>
+                        <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
+                        <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
+
+                        <!-- Logout -->
+                        <form th:action="@{/logout}" method="post" class="d-inline ms-2">
+                            <button class="btn btn-secondary bi bi-box-arrow-in-left" type="submit"> Выйти</button>
+                        </form>
+                    </div>
+
+                    <!-- Для неавторизованных показываем только Главная и Login -->
+                    <div th:if="${authentication == null or !authentication.authenticated}" class="ms-auto">
+                        <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
+                        <a class="btn btn-secondary bi bi-box-arrow-in-right" th:href="@{/login}"> Войти</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -32,7 +53,7 @@
                             <span class="badge text-bg-success justify-content-end" th:text="${item.price}+' руб.'"></span>
                         </h5>
                         <p class="card-text" th:text="${item.description}"></p>
-                        <form th:action="@{/items/{id}(id=${item.id})}" method="post">
+                        <form th:if="${authentication?.authenticated}" th:action="@{/items/{id}(id=${item.id})}" method="post">
                             <div class="hstack gap-3">
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="MINUS">-</button>
                                 <span th:text="${item.count}"></span>

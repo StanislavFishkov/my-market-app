@@ -2,6 +2,7 @@ package ru.yandex.practicum.mymarket.service.cart;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -31,8 +32,9 @@ public class CartServiceImpl implements CartService {
     private final BalanceApi balanceApi;
 
     @Override
-    public Flux<ItemWithCountDto> findCartItems() {
-        return cartItemRepository.findAll()
+    @PreAuthorize("#userId == authentication.principal.id")
+    public Flux<ItemWithCountDto> findCartItems(Long userId) {
+        return cartItemRepository.findAllByUserId(userId)
                 .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())
                         .map(itemDto -> itemMapper.toDto(itemDto, cartItem.getCount()))
                 );
@@ -40,10 +42,12 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public Mono<Void> changeItemCount(Long itemId, CartItemAction cartItemAction) {
-        return cartItemRepository.findByItemId(itemId)
+    @PreAuthorize("#userId == authentication.principal.id")
+    public Mono<Void> changeItemCount(Long userId, Long itemId, CartItemAction cartItemAction) {
+        return cartItemRepository.findByUserIdAndItemId(userId, itemId)
                 .switchIfEmpty(Mono.defer(() ->
                         Mono.just(CartItem.builder()
+                                .userId(userId)
                                 .itemId(itemId)
                                 .build()))
                 )
@@ -68,13 +72,16 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Mono<Void> deleteAllCartItems() {
-        return cartItemRepository.deleteAll();
+    @Transactional
+    @PreAuthorize("#userId == authentication.principal.id")
+    public Mono<Void> deleteAllCartItems(Long userId) {
+        return cartItemRepository.deleteAllByUserId(userId);
     }
 
     @Override
-    public Mono<CartDto> getCart() {
-        return cartItemRepository.findAll()
+    @PreAuthorize("#userId == authentication.principal.id")
+    public Mono<CartDto> getCart(Long userId) {
+        return cartItemRepository.findAllByUserId(userId)
                 .flatMap(cartItem -> itemCacheService.getItemById(cartItem.getItemId())
                         .map(itemDto -> itemMapper.toDto(itemDto, cartItem.getCount()))
                 ).collectList()

@@ -37,6 +37,20 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:9090/realms/mma # Адрес сервера авторизации для получения токена
+        registration:
+          my-market-app: # Описание клиента OAuth2
+            provider: keycloak
+            authorizationGrantType: client_credentials
+            client-id: my-market-app
+            client-secret: SKiR96V4VHEE1KgtCRV8DTVWBfi8ZRzV
+            scope: profile
+            clientAuthenticationMethod: client_secret_post # Способ передачи секрета
 
 payment:
   server:

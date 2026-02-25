@@ -3,6 +3,11 @@ server.port: 8081
 spring:
   application:
     name: payment-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/mma
 
 payment:
   balance: 100

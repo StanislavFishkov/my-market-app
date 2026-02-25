@@ -2,6 +2,8 @@ package ru.yandex.practicum.mymarket.service.order;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -37,8 +39,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Mono<Long> createOrder() {
-        return cartService.findCartItems()
+    @PreAuthorize("#userId == authentication.principal.id")
+    public Mono<Long> createOrder(Long userId) {
+        return cartService.findCartItems(userId)
                 .collectList()
                 .flatMap(cartItems -> {
                     if (cartItems.isEmpty()) {
@@ -55,13 +58,13 @@ public class OrderServiceImpl implements OrderService {
 
                                 return new PaymentServiceUnavailableException("Payment service unavailable", ex);
                             })
-                            .then(orderRepository.save(new Order())
+                            .then(orderRepository.save(Order.builder().userId(userId).build())
                                     .flatMap(order -> {
                                         order.setItems(itemMapper.toOrderItems(cartItems, order.getId()));
                                         return orderItemRepository.saveAll(order.getItems())
                                                 .then(Mono.just(order.getId()));
                                     })
-                                    .flatMap(orderId -> cartService.deleteAllCartItems()
+                                    .flatMap(orderId -> cartService.deleteAllCartItems(userId)
                                             .then(Mono.just(orderId))
                                     )
                                     .doOnNext(orderId -> log.debug("Order created: id={}", orderId))
@@ -70,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @PostAuthorize("returnObject.userId == authentication.principal.id")
     public Mono<OrderDto> getOrderById(Long orderId) {
         log.debug("Order requested: id={}", orderId);
 
@@ -78,10 +82,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Flux<OrderDto> findOrders() {
+    @PreAuthorize("#userId == authentication.principal.id")
+    public Flux<OrderDto> findOrders(Long userId) {
         log.debug("Orders requested");
 
-        return orderRepository.findAll()
+        return orderRepository.findAllByUserId(userId)
                 .flatMap(this::getAndSetOrderItems)
                 .map(orderMapper::toDto);
     }

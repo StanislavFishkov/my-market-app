@@ -7,6 +7,8 @@ services:
     depends_on:
       mma-cache:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
       payment-server:
         condition: service_healthy
     networks:
@@ -15,6 +17,7 @@ services:
       SPRING_DATA_REDIS_HOST: mma-cache
       SPRING_DATA_REDIS_PORT: 6379
       PAYMENT_SERVER_URL: http://payment-server:8081
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/mma
     healthcheck:
       test: "curl --fail --silent my-market-app:8080/actuator/health | grep UP || exit 1"
       timeout: 5s
@@ -38,13 +41,38 @@ services:
 
   payment-server:
     build: payment-module
-    container_name:   payment-server
+    container_name: payment-server
     ports:
       - "8081:8081"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - mma-net
+    environment:
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/mma
+    healthcheck:
+      test: "curl --fail --silent payment-server:8081/actuator/health | grep UP || exit 1"
+      timeout: 5s
+      interval: 20s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.4
+    container_name: keycloak-auth
+    ports:
+      - "9090:8080"
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak-init:/opt/keycloak/data/import
     networks:
       - mma-net
     healthcheck:
-      test: "curl --fail --silent payment-server:8081/actuator/health | grep UP || exit 1"
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; echo -e 'GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3; grep 'HTTP/1.1 200 OK' <&3"]
       timeout: 5s
       interval: 20s
       retries: 5
