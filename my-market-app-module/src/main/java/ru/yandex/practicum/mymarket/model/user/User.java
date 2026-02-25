@@ -1,7 +1,5 @@
 package ru.yandex.practicum.mymarket.model.user;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,18 +22,12 @@ public class User {
     @Id
     Long id;
 
-    @NotBlank
-    @Size(max = 255)
     @Column
     String login;
 
-    @NotBlank
-    @Size(max = 255)
     @Column
     String password;
 
-    @NotBlank
-    @Size(max = 255)
     @Column
     String name;
 }

@@ -1,11 +1,12 @@
 package ru.yandex.practicum.mymarket.model.cart;
 
-import jakarta.validation.constraints.Min;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -16,6 +17,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CartItem {
     @Id
     Long id;
@@ -26,7 +28,6 @@ public class CartItem {
     @Column("item_id")
     Long itemId;
 
-    @Min(0)
     @Column
     @Builder.Default
     Integer count = 0;

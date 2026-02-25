@@ -1,13 +1,12 @@
 package ru.yandex.practicum.mymarket.model.order;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -18,6 +17,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderItem {
     @Id
     Long id;
@@ -28,16 +28,12 @@ public class OrderItem {
     @Column("item_id")
     Long itemId;
 
-    @NotBlank
-    @Size(max = 255)
     @Column
     String title;
 
-    @Min(0)
     @Column
     Long price;
 
-    @Min(0)
     @Column
     Integer count;
 }

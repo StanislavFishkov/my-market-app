@@ -58,7 +58,6 @@ public class SecurityConfig {
 
         manager.setAuthorizedClientProvider(ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
                 .clientCredentials()
-                .refreshToken()
                 .build()
         );
 
